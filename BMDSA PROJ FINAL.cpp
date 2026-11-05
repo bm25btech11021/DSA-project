@@ -26,8 +26,6 @@ public:
     Team* tail=nullptr;
     int count=0;
     TeamList(){}
-    TeamList(const TeamList&)=delete;
-    TeamList& operator=(const TeamList&)=delete;
     ~TeamList(){
         Team* current=head;
         while(current!=nullptr){
