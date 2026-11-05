@@ -18,7 +18,6 @@ public:
     Team* head=nullptr;
     Team* tail=nullptr;
     int count=0;
-
     ~TeamList(){
         Team* current=head;
         while(current!=nullptr){
@@ -27,7 +26,6 @@ public:
             delete temp;
         }
     }
-
     bool exists(string name){
         Team* current=head;
         while(current!=nullptr){
@@ -37,7 +35,6 @@ public:
         }
         return false;
     }
-
     Team* add(int id,string name,string captain){
         Team* t=new Team;
         t->id=id;
@@ -50,6 +47,7 @@ public:
             tail->next=t;
             tail=t;
         }
+
         count++;
         return t;
     }
@@ -61,6 +59,7 @@ public:
             v.push_back(current);
             current=current->next;
         }
+
         return v;
     }
     void print(){
@@ -78,7 +77,6 @@ public:
         }
     }
 };
-
 enum MatchType{NORMAL,BRONZE,FINAL_MATCH,PLACEMENT};
 struct Match{
     int id=0;
@@ -88,18 +86,15 @@ struct Match{
     string stage;
     int pairIdx=-1,nodeIdx=-1,replays=0;
 };
-
 struct BracketNode{
     string text;
     int left=-1,right=-1;
 };
-
-template<class T,int CAPACITY=128>
-class ManualQueue{
+template<class T>
+class MyQueue{
 private:
-    T data[CAPACITY];
+    T data[1000];
     int frontIndex=0,rearIndex=-1,count=0;
-
 public:
     bool empty() const{
         return count==0;
@@ -108,11 +103,11 @@ public:
         return count;
     }
     void push(T value){
-        if(count==CAPACITY){
+        if(count==1000){
             cout<<"Queue is full.\n";
             return;
         }
-        rearIndex=(rearIndex+1)%CAPACITY;
+        rearIndex=(rearIndex+1)%1000;
         data[rearIndex]=value;
         count++;
     }
@@ -120,19 +115,19 @@ public:
         if(empty())
             return;
 
-        frontIndex=(frontIndex+1)%CAPACITY;
+        frontIndex=(frontIndex+1)%1000;
         count--;
     }
     T& front(){
         return data[frontIndex];
     }
 };
-
-template<class T,int CAPACITY=64>
-class ManualStack{
+template<class T>
+class MyStack{
 private:
-    T data[CAPACITY];
+    T data[1000];
     int topIndex=-1;
+
 public:
     bool empty() const{
         return topIndex==-1;
@@ -141,7 +136,7 @@ public:
         return topIndex+1;
     }
     void push(T value){
-        if(topIndex==CAPACITY-1){
+        if(topIndex==999){
             cout<<"Stack is full.\n";
             return;
         }
@@ -163,53 +158,39 @@ public:
 class LeagueManager{
 private:
     TeamList teams;
-    ManualQueue<Match,128> pending;
-    ManualStack<Team*,64> eliminated;
-
+    MyQueue<Match> pending;
+    MyStack<Team*> eliminated;
     vector<BracketNode> bracket;
     vector<Team*> allTeams;
-
     bool started=false,finished=false,finalRound=false;
     bool threeTeamSemi=false,placementRound=false;
-
     int nextMatchId=1,nextTeamId=1,roundNo=0;
-
     string currentStage;
-
     Team* byeTeam=nullptr;
-
     vector<Team*> roundWinners,semiLosers;
-
     Team *champion=nullptr,*runnerUp=nullptr;
     Team *thirdPlace=nullptr,*fourthPlace=nullptr;
-
     Match createMatch(Team* a,Team* b,MatchType type,string stage,int pair){
         Match m;
-
         m.id=nextMatchId++;
         m.a=a;
         m.b=b;
         m.type=type;
         m.stage=stage;
         m.pairIdx=pair;
-
         if(type!=BRONZE&&type!=PLACEMENT){
             BracketNode node;
-
             node.text="Match "+to_string(m.id)+": "+a->name+" vs "+b->name;
             node.left=a->bracketNode;
             node.right=b->bracketNode;
 
             bracket.push_back(node);
-
             m.nodeIdx=(int)bracket.size()-1;
 
             a->bracketNode=m.nodeIdx;
             b->bracketNode=m.nodeIdx;
         }
-
         pending.push(m);
-
         return m;
     }
 
@@ -218,13 +199,10 @@ private:
             cout<<"No pending matches.\n";
             return;
         }
-
-        ManualQueue<Match,128> temp=pending;
-
+        MyQueue<Match> temp=pending;
         while(!temp.empty()){
             Match m=temp.front();
             temp.pop();
-
             cout<<"Match "<<m.id<<": "
                 <<m.a->name<<" vs "<<m.b->name
                 <<" | "<<m.stage;
@@ -239,7 +217,6 @@ private:
     void startRound(vector<Team*> players){
         roundWinners.clear();
         byeTeam=nullptr;
-
         if(players.size()==2){
             finalRound=true;
             currentStage="Final";
@@ -247,7 +224,6 @@ private:
         else{
             finalRound=false;
             roundNo++;
-
             if(players.size()<=4)
                 currentStage="Semifinal";
             else
@@ -255,7 +231,6 @@ private:
 
             threeTeamSemi=(currentStage=="Semifinal"&&players.size()==3);
         }
-
         if(players.size()%2==1){
             int selected=-1;
 
@@ -277,20 +252,16 @@ private:
 
             players.erase(players.begin()+selected);
         }
-
         for(int i=0;i<(int)players.size();i+=2){
             MatchType type=finalRound?FINAL_MATCH:NORMAL;
             createMatch(players[i],players[i+1],type,currentStage,i/2);
         }
-
         if(finalRound&&semiLosers.size()==2)
             createMatch(semiLosers[0],semiLosers[1],BRONZE,"Bronze Match",0);
 
         cout<<"\n"<<currentStage<<" matches generated.\n";
-
         printPending();
     }
-
     void eliminate(Team* loser,string reason){
         if(loser==nullptr)
             return;
@@ -298,7 +269,6 @@ private:
         loser->exitNote=reason;
         eliminated.push(loser);
     }
-
     void teamWon(Match m,Team* winner,Team* loser){
         if(m.type==PLACEMENT){
             runnerUp=winner;
@@ -309,10 +279,8 @@ private:
 
             cout<<winner->name<<" secured second place.\n";
             cout<<loser->name<<" secured third place.\n";
-
             return;
         }
-
         if(m.type==BRONZE){
             thirdPlace=winner;
             fourthPlace=loser;
@@ -321,10 +289,8 @@ private:
             eliminate(winner,"Finished third place");
 
             cout<<winner->name<<" secured third place.\n";
-
             return;
         }
-
         if(m.nodeIdx!=-1)
             bracket[m.nodeIdx].text=m.stage+": "+winner->name+" defeated "+loser->name;
 
@@ -344,7 +310,6 @@ private:
 
         roundWinners.push_back(winner);
     }
-
     void replay(Match m){
         m.replays++;
 
@@ -354,10 +319,8 @@ private:
                 +" (Replay "+to_string(m.replays)+")";
 
         pending.push(m);
-
         cout<<"Match moved to the back of the queue.\n";
     }
-
     void finishStage(){
         if(placementRound){
             placementRound=false;
@@ -365,7 +328,6 @@ private:
             showFinalResults();
             return;
         }
-
         if(finalRound){
             if(threeTeamSemi&&semiLosers.size()==1){
                 placementRound=true;
@@ -378,25 +340,24 @@ private:
                             "Second/Third Place Match",0);
 
                 printPending();
-
                 return;
             }
-
             if(semiLosers.size()==1){
                 thirdPlace=semiLosers[0];
                 eliminate(thirdPlace,"Finished third place");
             }
+
             finished=true;
             showFinalResults();
-
             return;
         }
+
         vector<Team*> nextRound=roundWinners;
+
         if(byeTeam!=nullptr)
             nextRound.push_back(byeTeam);
 
         cout<<"\nRound completed.\n";
-
         startRound(nextRound);
     }
 
@@ -456,18 +417,16 @@ private:
         if(eliminated.empty())
             cout<<"No eliminated teams.\n";
         else{
-            ManualStack<Team*,64> temp=eliminated;
+            MyStack<Team*> temp=eliminated;
 
             while(!temp.empty()){
                 Team* t=temp.top();
                 temp.pop();
-
                 cout<<t->name<<" | "<<t->exitNote<<"\n";
             }
         }
 
         printBracket();
-
         cout<<"\nTournament completed successfully.\n";
     }
 
@@ -507,13 +466,14 @@ public:
         }
 
         teams.add(nextTeamId++,name,captain);
-
         cout<<"Team registered successfully.\n";
     }
+
     void viewTeams(){
         cout<<"\n========== REGISTERED TEAMS ==========\n";
         teams.print();
     }
+
     void startLeague(){
         if(started){
             cout<<"League has already started.\n";
@@ -526,28 +486,36 @@ public:
         }
 
         char confirm;
+
         cout<<"Start the knockout tournament? (y/n): ";
         cin>>confirm;
         cin.ignore(numeric_limits<streamsize>::max(),'\n');
+
         if(confirm!='y'&&confirm!='Y'){
             cout<<"Tournament start cancelled.\n";
             return;
         }
+
         started=true;
         allTeams=teams.toVector();
+
         for(int i=0;i<(int)allTeams.size();i++){
             BracketNode node;
             node.text=allTeams[i]->name;
             bracket.push_back(node);
             allTeams[i]->bracketNode=(int)bracket.size()-1;
         }
+
         unsigned seed=chrono::steady_clock::now().time_since_epoch().count();
         mt19937 rng(seed);
         shuffle(allTeams.begin(),allTeams.end(),rng);
+
         cout<<"\nTournament started!\n";
         cout<<"Initial team order randomized.\n";
+
         startRound(allTeams);
     }
+
     void showPending(){
         if(!started){
             cout<<"Start the league first.\n";
@@ -555,19 +523,19 @@ public:
         }
 
         cout<<"\n========== UPCOMING MATCHES ==========\n";
-
         printPending();
     }
+
     void enterResult(){
         if(!started||finished){
             cout<<"No active tournament matches.\n";
             return;
         }
+
         if(pending.empty()){
             cout<<"No pending matches.\n";
             return;
         }
-
         Match m=pending.front();
         cout<<"\n========== ENTER MATCH RESULT ==========\n";
         cout<<"Match "<<m.id<<"\n";
@@ -583,9 +551,7 @@ public:
         if(!(cin>>option)){
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(),'\n');
-
             cout<<"Invalid input.\n";
-
             return;
         }
 
@@ -600,31 +566,35 @@ public:
         }
 
         pending.pop();
+
         if(option==1)
             teamWon(m,m.a,m.b);
         else if(option==2)
             teamWon(m,m.b,m.a);
         else
             replay(m);
+
         if(pending.empty())
             finishStage();
     }
 
     void showStatus(){
         cout<<"\n========== LEAGUE STATUS ==========\n";
+
         if(!started)
             cout<<"Status: Not started\n";
         else if(finished)
             cout<<"Status: Completed\n";
         else
             cout<<"Status: In progress\n";
+
         cout<<"Registered teams: "<<teams.count<<"\n";
         cout<<"Pending matches: "<<pending.size()<<"\n";
+
         if(started)
             printBracket();
     }
 };
-
 void printMenu(){
     cout<<"\n========== SPORTS LEAGUE MANAGEMENT ==========\n";
     cout<<"1. Register a team\n";
@@ -635,7 +605,6 @@ void printMenu(){
     cout<<"6. League status and bracket\n";
     cout<<"0. Exit\n";
 }
-
 int main(){
     LeagueManager league;
     int choice;
@@ -648,12 +617,9 @@ int main(){
 
             cin.clear();
             cin.ignore(numeric_limits<streamsize>::max(),'\n');
-
             cout<<"Please enter a valid number.\n";
-
             continue;
         }
-
         cin.ignore(numeric_limits<streamsize>::max(),'\n');
         switch(choice){
             case 1:
