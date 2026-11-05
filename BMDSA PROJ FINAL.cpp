@@ -50,11 +50,9 @@ public:
             tail->next=t;
             tail=t;
         }
-
         count++;
         return t;
     }
-
     vector<Team*> toVector(){
         vector<Team*> v;
         Team* current=head;
@@ -63,18 +61,14 @@ public:
             v.push_back(current);
             current=current->next;
         }
-
         return v;
     }
-
     void print(){
         if(head==nullptr){
             cout<<"No teams registered.\n";
             return;
         }
-
         Team* current=head;
-
         while(current!=nullptr){
             cout<<"ID: "<<current->id
                 <<" | Team: "<<current->name
@@ -86,7 +80,6 @@ public:
 };
 
 enum MatchType{NORMAL,BRONZE,FINAL_MATCH,PLACEMENT};
-
 struct Match{
     int id=0;
     Team* a=nullptr;
@@ -111,22 +104,18 @@ public:
     bool empty() const{
         return count==0;
     }
-
     int size() const{
         return count;
     }
-
     void push(T value){
         if(count==CAPACITY){
             cout<<"Queue is full.\n";
             return;
         }
-
         rearIndex=(rearIndex+1)%CAPACITY;
         data[rearIndex]=value;
         count++;
     }
-
     void pop(){
         if(empty())
             return;
@@ -134,7 +123,6 @@ public:
         frontIndex=(frontIndex+1)%CAPACITY;
         count--;
     }
-
     T& front(){
         return data[frontIndex];
     }
@@ -145,16 +133,13 @@ class ManualStack{
 private:
     T data[CAPACITY];
     int topIndex=-1;
-
 public:
     bool empty() const{
         return topIndex==-1;
     }
-
     int size() const{
         return topIndex+1;
     }
-
     void push(T value){
         if(topIndex==CAPACITY-1){
             cout<<"Stack is full.\n";
@@ -163,7 +148,6 @@ public:
 
         data[++topIndex]=value;
     }
-
     void pop(){
         if(empty())
             return;
@@ -402,15 +386,12 @@ private:
                 thirdPlace=semiLosers[0];
                 eliminate(thirdPlace,"Finished third place");
             }
-
             finished=true;
             showFinalResults();
 
             return;
         }
-
         vector<Team*> nextRound=roundWinners;
-
         if(byeTeam!=nullptr)
             nextRound.push_back(byeTeam);
 
@@ -529,12 +510,10 @@ public:
 
         cout<<"Team registered successfully.\n";
     }
-
     void viewTeams(){
         cout<<"\n========== REGISTERED TEAMS ==========\n";
         teams.print();
     }
-
     void startLeague(){
         if(started){
             cout<<"League has already started.\n";
@@ -547,43 +526,28 @@ public:
         }
 
         char confirm;
-
         cout<<"Start the knockout tournament? (y/n): ";
         cin>>confirm;
-
         cin.ignore(numeric_limits<streamsize>::max(),'\n');
-
         if(confirm!='y'&&confirm!='Y'){
             cout<<"Tournament start cancelled.\n";
             return;
         }
-
         started=true;
-
         allTeams=teams.toVector();
-
         for(int i=0;i<(int)allTeams.size();i++){
             BracketNode node;
-
             node.text=allTeams[i]->name;
-
             bracket.push_back(node);
-
             allTeams[i]->bracketNode=(int)bracket.size()-1;
         }
-
         unsigned seed=chrono::steady_clock::now().time_since_epoch().count();
-
         mt19937 rng(seed);
-
         shuffle(allTeams.begin(),allTeams.end(),rng);
-
         cout<<"\nTournament started!\n";
         cout<<"Initial team order randomized.\n";
-
         startRound(allTeams);
     }
-
     void showPending(){
         if(!started){
             cout<<"Start the league first.\n";
@@ -594,33 +558,26 @@ public:
 
         printPending();
     }
-
     void enterResult(){
         if(!started||finished){
             cout<<"No active tournament matches.\n";
             return;
         }
-
         if(pending.empty()){
             cout<<"No pending matches.\n";
             return;
         }
 
         Match m=pending.front();
-
         cout<<"\n========== ENTER MATCH RESULT ==========\n";
-
         cout<<"Match "<<m.id<<"\n";
         cout<<m.a->name<<" vs "<<m.b->name<<"\n";
-
         cout<<"\n1. "<<m.a->name<<" wins\n";
         cout<<"2. "<<m.b->name<<" wins\n";
         cout<<"3. Draw\n";
         cout<<"4. Cancel match and replay\n";
         cout<<"0. Back\n";
-
         int option;
-
         cout<<"Enter result: ";
 
         if(!(cin>>option)){
@@ -643,31 +600,26 @@ public:
         }
 
         pending.pop();
-
         if(option==1)
             teamWon(m,m.a,m.b);
         else if(option==2)
             teamWon(m,m.b,m.a);
         else
             replay(m);
-
         if(pending.empty())
             finishStage();
     }
 
     void showStatus(){
         cout<<"\n========== LEAGUE STATUS ==========\n";
-
         if(!started)
             cout<<"Status: Not started\n";
         else if(finished)
             cout<<"Status: Completed\n";
         else
             cout<<"Status: In progress\n";
-
         cout<<"Registered teams: "<<teams.count<<"\n";
         cout<<"Pending matches: "<<pending.size()<<"\n";
-
         if(started)
             printBracket();
     }
@@ -686,14 +638,10 @@ void printMenu(){
 
 int main(){
     LeagueManager league;
-
     int choice;
-
     do{
         printMenu();
-
         cout<<"Enter your choice: ";
-
         if(!(cin>>choice)){
             if(cin.eof())
                 break;
@@ -707,36 +655,28 @@ int main(){
         }
 
         cin.ignore(numeric_limits<streamsize>::max(),'\n');
-
         switch(choice){
             case 1:
                 league.registerTeam();
                 break;
-
             case 2:
                 league.viewTeams();
                 break;
-
             case 3:
                 league.startLeague();
                 break;
-
             case 4:
                 league.showPending();
                 break;
-
             case 5:
                 league.enterResult();
                 break;
-
             case 6:
                 league.showStatus();
                 break;
-
             case 0:
                 cout<<"Exiting Sports League Management System.\n";
                 break;
-
             default:
                 cout<<"Invalid choice. Enter between 0 and 6.\n";
         }
