@@ -1,9 +1,16 @@
+
 #include<bits/stdc++.h>
 using namespace std;
 string toLower(string s){
     for(int i=0;i<(int)s.size();i++)
         s[i]=tolower((unsigned char)s[i]);
     return s;
+}
+bool isBlank(string s){
+    for(int i=0;i<(int)s.size();i++)
+        if(!isspace((unsigned char)s[i]))
+            return false;
+    return true;
 }
 struct Team{
     int id=0;
@@ -17,7 +24,9 @@ class TeamList{
 public:
     Team* head=nullptr;
     Team* tail=nullptr;
-    size_t count=0;
+    int count=0;
+    TeamList(const TeamList&)=delete;
+    TeamList& operator=(const TeamList&)=delete;
     ~TeamList(){
         Team* current=head;
         while(current!=nullptr){
@@ -26,8 +35,6 @@ public:
             delete temp;
         }
     }
-    TeamList(const TeamList&)=delete;
-    TeamList& operator=(const TeamList&)=delete;
     bool exists(string name){
         Team* current=head;
         while(current!=nullptr){
@@ -91,14 +98,14 @@ private:
     struct Node{
         T data;
         Node* next;
-        Node(T value){
+        Node(const T& value){
             data=value;
             next=nullptr;
         }
     };
     Node* frontNode=nullptr;
     Node* rearNode=nullptr;
-    size_t count=0;
+    int count=0;
     void clear(){
         while(frontNode!=nullptr){
             Node* temp=frontNode;
@@ -118,13 +125,13 @@ public:
         }
     }
     MyQueue& operator=(const MyQueue& other){
-        if(this==&other)
-            return *this;
-        clear();
-        Node* current=other.frontNode;
-        while(current!=nullptr){
-            push(current->data);
-            current=current->next;
+        if(this!=&other){
+            clear();
+            Node* current=other.frontNode;
+            while(current!=nullptr){
+                push(current->data);
+                current=current->next;
+            }
         }
         return *this;
     }
@@ -132,12 +139,12 @@ public:
         clear();
     }
     bool empty() const{
-        return frontNode==nullptr;
+        return count==0;
     }
-    size_t size() const{
+    int size() const{
         return count;
     }
-    void push(T value){
+    void push(const T& value){
         Node* temp=new Node(value);
         if(rearNode==nullptr)
             frontNode=rearNode=temp;
@@ -152,10 +159,10 @@ public:
             return;
         Node* temp=frontNode;
         frontNode=frontNode->next;
-        delete temp;
-        count--;
         if(frontNode==nullptr)
             rearNode=nullptr;
+        delete temp;
+        count--;
     }
     T& front(){
         return frontNode->data;
@@ -167,13 +174,13 @@ private:
     struct Node{
         T data;
         Node* next;
-        Node(T value){
+        Node(const T& value){
             data=value;
             next=nullptr;
         }
     };
     Node* topNode=nullptr;
-    size_t count=0;
+    int count=0;
     void clear(){
         while(topNode!=nullptr){
             Node* temp=topNode;
@@ -195,17 +202,17 @@ public:
             push(values[i]);
     }
     MyStack& operator=(const MyStack& other){
-        if(this==&other)
-            return *this;
-        clear();
-        vector<T> values;
-        Node* current=other.topNode;
-        while(current!=nullptr){
-            values.push_back(current->data);
-            current=current->next;
+        if(this!=&other){
+            clear();
+            vector<T> values;
+            Node* current=other.topNode;
+            while(current!=nullptr){
+                values.push_back(current->data);
+                current=current->next;
+            }
+            for(int i=(int)values.size()-1;i>=0;i--)
+                push(values[i]);
         }
-        for(int i=(int)values.size()-1;i>=0;i--)
-            push(values[i]);
         return *this;
     }
     ~MyStack(){
@@ -214,10 +221,10 @@ public:
     bool empty() const{
         return topNode==nullptr;
     }
-    size_t size() const{
+    int size() const{
         return count;
     }
-    void push(T value){
+    void push(const T& value){
         Node* temp=new Node(value);
         temp->next=topNode;
         topNode=temp;
@@ -292,8 +299,7 @@ private:
         if(players.size()==2){
             finalRound=true;
             currentStage="Final";
-        }
-        else{
+        }else{
             finalRound=false;
             roundNo++;
             if(players.size()<=4)
@@ -317,8 +323,7 @@ private:
             cout<<"\nBYE: "<<byeTeam->name<<" advances to the next round.\n";
             players.erase(players.begin()+selected);
         }
-        int numberOfMatches=(int)players.size()/2;
-        roundWinners.assign(numberOfMatches,nullptr);
+        roundWinners.assign(players.size()/2,nullptr);
         int left=0;
         int right=(int)players.size()-1;
         int pair=0;
@@ -330,7 +335,7 @@ private:
             pair++;
         }
         if(finalRound&&semiLosers.size()==2)
-            createMatch(semiLosers[0],semiLosers[1],BRONZE,"Bronze Match",-1);
+            createMatch(semiLosers[0],semiLosers[1],BRONZE,"Bronze Match",0);
         cout<<"\n"<<currentStage<<" matches generated.\n";
         printPending();
     }
@@ -366,15 +371,12 @@ private:
             if(!threeTeamSemi)
                 eliminate(loser,"Lost the final");
             cout<<"\nCHAMPION: "<<champion->name<<"\n";
-        }
-        else{
-            if(m.pairIdx>=0&&m.pairIdx<(int)roundWinners.size())
-                roundWinners[m.pairIdx]=winner;
-            if(m.stage=="Semifinal")
-                semiLosers.push_back(loser);
-            else
-                eliminate(loser,"Lost in "+m.stage);
-        }
+        }else if(m.stage=="Semifinal")
+            semiLosers.push_back(loser);
+        else
+            eliminate(loser,"Lost in "+m.stage);
+        if(m.pairIdx>=0&&m.pairIdx<(int)roundWinners.size())
+            roundWinners[m.pairIdx]=winner;
     }
     void replay(Match m){
         m.replays++;
@@ -408,11 +410,7 @@ private:
             showFinalResults();
             return;
         }
-        vector<Team*> nextRound;
-        for(int i=0;i<(int)roundWinners.size();i++){
-            if(roundWinners[i]!=nullptr)
-                nextRound.push_back(roundWinners[i]);
-        }
+        vector<Team*> nextRound=roundWinners;
         if(byeTeam!=nullptr)
             nextRound.push_back(byeTeam);
         cout<<"\nRound completed.\n";
@@ -440,10 +438,9 @@ private:
                 hasParent[bracket[i].right]=true;
         }
         cout<<"\n========== TOURNAMENT BRACKET ==========\n";
-        for(int i=0;i<(int)bracket.size();i++){
+        for(int i=0;i<(int)bracket.size();i++)
             if(!hasParent[i])
                 printTree(i,0);
-        }
     }
     void showFinalResults(){
         cout<<"\n========== FINAL RESULTS ==========\n";
@@ -477,8 +474,9 @@ public:
         }
         string name,captain;
         cout<<"Enter team name: ";
-        getline(cin,name);
-        if(name.empty()){
+        if(!getline(cin,name))
+            return;
+        if(isBlank(name)){
             cout<<"Invalid team name.\n";
             return;
         }
@@ -487,8 +485,9 @@ public:
             return;
         }
         cout<<"Enter captain name: ";
-        getline(cin,captain);
-        if(captain.empty()){
+        if(!getline(cin,captain))
+            return;
+        if(isBlank(captain)){
             cout<<"Invalid captain name.\n";
             return;
         }
@@ -508,11 +507,11 @@ public:
             cout<<"Register at least two teams first.\n";
             return;
         }
-        char confirm;
+        string confirm;
         cout<<"Start the knockout tournament? (y/n): ";
-        cin>>confirm;
-        cin.ignore(numeric_limits<streamsize>::max(),'\n');
-        if(confirm!='y'&&confirm!='Y'){
+        if(!getline(cin,confirm))
+            return;
+        if(confirm!="y"&&confirm!="Y"){
             cout<<"Tournament start cancelled.\n";
             return;
         }
@@ -554,25 +553,21 @@ public:
         cout<<"3. Draw\n";
         cout<<"4. Cancel match and replay\n";
         cout<<"0. Back\n";
-        int option;
+        string input;
         cout<<"Enter result: ";
-        if(!(cin>>option)){
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(),'\n');
-            cout<<"Invalid input.\n";
+        if(!getline(cin,input))
             return;
-        }
-        cin.ignore(numeric_limits<streamsize>::max(),'\n');
-        if(option==0)
-            return;
-        if(option<1||option>4){
+        if(input.size()!=1||input[0]<'0'||input[0]>'4'){
             cout<<"Invalid choice.\n";
             return;
         }
+        char option=input[0];
+        if(option=='0')
+            return;
         pending.pop();
-        if(option==1)
+        if(option=='1')
             teamWon(m,m.a,m.b);
-        else if(option==2)
+        else if(option=='2')
             teamWon(m,m.b,m.a);
         else
             replay(m);
@@ -605,44 +600,39 @@ void printMenu(){
 }
 int main(){
     LeagueManager league;
-    int choice;
-    do{
+    string input;
+    while(true){
         printMenu();
         cout<<"Enter your choice: ";
-        if(!(cin>>choice)){
-            if(cin.eof())
-                break;
-            cin.clear();
-            cin.ignore(numeric_limits<streamsize>::max(),'\n');
-            cout<<"Please enter a valid number.\n";
+        if(!getline(cin,input))
+            break;
+        if(input.size()!=1||input[0]<'0'||input[0]>'6'){
+            cout<<"Please enter a valid number between 0 and 6.\n";
             continue;
         }
-        cin.ignore(numeric_limits<streamsize>::max(),'\n');
-        switch(choice){
-            case 1:
+        switch(input[0]){
+            case '1':
                 league.registerTeam();
                 break;
-            case 2:
+            case '2':
                 league.viewTeams();
                 break;
-            case 3:
+            case '3':
                 league.startLeague();
                 break;
-            case 4:
+            case '4':
                 league.showPending();
                 break;
-            case 5:
+            case '5':
                 league.enterResult();
                 break;
-            case 6:
+            case '6':
                 league.showStatus();
                 break;
-            case 0:
+            case '0':
                 cout<<"Exiting Sports League Management System.\n";
-                break;
-            default:
-                cout<<"Invalid choice. Enter between 0 and 6.\n";
+                return 0;
         }
-    }while(choice!=0);
+    }
     return 0;
 }
